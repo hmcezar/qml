@@ -1,7 +1,8 @@
 import sys
+import os
 from numpy.distutils.core import Extension, setup
 
-from mkldiscover import mkl_exists
+# from mkldiscover import mkl_exists
 
 __author__ = "Anders S. Christensen"
 __copyright__ = "Copyright 2016"
@@ -13,6 +14,57 @@ __email__ = "andersbiceps@gmail.com"
 __status__ = "Beta"
 __description__ = "Quantum Machine Learning"
 __url__ = "https://github.com/qmlcode/qml"
+
+def mkl_exists(verbose=False):
+
+    # Get environment variables
+    __MKLROOT__ = os.environ.get('MKLROOT')
+    __LD_LIBRARY_PATH__ = os.environ.get('LD_LIBRARY_PATH')
+
+    # Check if $MKLROOT is set
+
+    if __MKLROOT__ is None:
+
+        if verbose: 
+            print("MKL-discover: MKLROOT was not set")
+
+        return False
+
+    else:
+
+        if verbose: 
+            print("MKL-discover: MKLROOT was set to")
+            print(__MKLROOT__)
+
+    # Check if path exists
+    mklroot_exists = os.path.isdir(__MKLROOT__)
+    
+    if not mklroot_exists:
+        if verbose: 
+            print("MKL-discover: MKLROOT path does not exist")
+
+        return False
+
+    found_libmkl_rt = False
+
+    # Check if libmkl_rt.so exists below $MKLROOT
+    for dirpath, dirnames, filenames in os.walk(__MKLROOT__, followlinks=True):
+
+        if "libmkl_rt.so" in filenames:
+
+            if verbose:
+                print("MKL-discover: Found libmkl_rt.so at ", dirpath)
+
+            # Check that the dirpath where libmkl_rt.so is in $LD_LIBRARY_PATH
+            if dirpath in __LD_LIBRARY_PATH__:
+
+                if verbose:
+                    print("MKL-discover: Found %s in $LD_LIBRARY_PATH" % dirpath)
+                    print("MKL-discover: Concluding that MKL can be used.")
+                found_libmkl_rt = True
+
+
+    return found_libmkl_rt
 
 
 FORTRAN = "f90"
